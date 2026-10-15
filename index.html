@@ -1,641 +1,395 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="it">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
-  <meta name="theme-color" content="#111827">
+  <meta name="theme-color" content="#0f1115">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Cassa Piadine">
-  <link rel="manifest" href="manifest.webmanifest">
-  <link rel="apple-touch-icon" href="icon-192.png">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="apple-touch-icon" href="./icon-192.png">
   <title>Cassa Piadine</title>
   <style>
     :root {
       color-scheme: dark;
-      --bg: #0f1115;
-      --panel: #171a21;
-      --panel2: #20242d;
-      --text: #f7f7f8;
-      --muted: #a8adb8;
-      --danger: #d14b4b;
-      --radius: 18px;
-      --safe-top: env(safe-area-inset-top, 0px);
-      --safe-bottom: env(safe-area-inset-bottom, 0px);
+      --bg:#0f1115; --panel:#181b22; --line:#2a2f3a; --text:#f7f8fb;
+      --muted:#a4aab5; --safe-top:env(safe-area-inset-top,0px);
+      --safe-bottom:env(safe-area-inset-bottom,0px);
     }
-    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-    html, body { margin: 0; min-height: 100%; background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif; }
-    body { min-height: 100dvh; overscroll-behavior: none; }
-    button, input { font: inherit; }
-    button { touch-action: manipulation; user-select: none; -webkit-user-select: none; }
+    * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+    html,body { margin:0; width:100%; min-height:100%; background:var(--bg); color:var(--text); font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
+    body { overscroll-behavior:none; }
+    button { font:inherit; touch-action:manipulation; user-select:none; -webkit-user-select:none; cursor:pointer; }
     .app {
-      min-height: 100dvh;
-      max-width: 560px;
-      margin: 0 auto;
-      padding: calc(4px + var(--safe-top)) 12px calc(8px + var(--safe-bottom));
-      display: flex;
-      flex-direction: column;
-      gap: 9px;
+      display:flex; flex-direction:column; gap:8px; width:100%; max-width:560px;
+      height:100dvh; min-height:0; margin:0 auto;
+      padding:calc(var(--safe-top) + 3px) 11px calc(var(--safe-bottom) + 7px);
     }
-    .icon-btn {
-      position: absolute;
-      top: 10px; right: 10px;
-      width: 42px; height: 42px; border-radius: 13px; border: 0;
-      background: rgba(255,255,255,.055); color: var(--text); font-size: 20px;
-      display:flex; align-items:center; justify-content:center;
-      z-index: 2;
-    }
-    .icon-btn:active { transform: scale(.96); background: rgba(255,255,255,.11); }
-
     .total-card {
-      position: relative;
-      background: linear-gradient(180deg, #191d25 0%, #13161c 100%);
-      border: 1px solid #282d37;
-      border-radius: 22px;
-      padding: 10px 58px 12px;
-      text-align: center;
-      box-shadow: 0 8px 30px rgba(0,0,0,.22);
-      flex: none;
+      flex:none; position:relative; background:linear-gradient(175deg,#1b1f27,#13161c);
+      border:1px solid var(--line); border-radius:20px; text-align:center;
+      padding:10px 53px 11px;
     }
-    .total-label { color: var(--muted); font-size: 12px; font-weight: 800; letter-spacing: .16em; }
-    .total { font-size: clamp(42px, 13vw, 70px); font-weight: 900; line-height: 1.05; letter-spacing: -.04em; margin-top: 2px; }
-
+    .total-label { color:var(--muted); font-size:11px; letter-spacing:.17em; font-weight:850; }
+    .total { font-size:clamp(39px,12vw,61px); line-height:1.1; font-weight:920; letter-spacing:-.045em; white-space:nowrap; }
+    .settings-btn {
+      position:absolute; right:8px; top:8px; width:42px; height:42px; border:0;
+      border-radius:12px; background:#252a34; color:var(--text); font-size:22px;
+    }
+    .settings-btn:active { background:#363d49; transform:scale(.97); }
     .summary {
-      background: var(--panel);
-      border-radius: var(--radius);
-      padding: 6px;
-      min-height: 62px;
-      max-height: none;
-      overflow: visible;
-      border: 1px solid #252a33;
-      flex: none;
+      flex:none; border:1px solid var(--line); border-radius:17px;
+      padding:6px; background:var(--panel); min-height:52px;
+      display:grid; grid-template-columns:1fr; gap:2px; align-content:start;
     }
-    .empty {
-      color: var(--muted); min-height: 48px; display:flex; align-items:center; justify-content:center;
-      font-size: 14px;
-    }
+    .summary.two-col { grid-template-columns:repeat(2,minmax(0,1fr)); column-gap:5px; }
+    .summary.empty-summary { place-items:center; }
+    .empty-text { color:var(--muted); font-size:13px; padding:9px; }
     .summary-row {
-      width: 100%; border: 0; color: var(--text); background: transparent;
-      min-height: 44px; display:grid; grid-template-columns: 8px 1fr auto auto;
-      gap: 10px; align-items:center; text-align:left; padding: 6px 8px;
-      border-radius: 12px;
+      min-width:0; min-height:34px; display:flex; align-items:center; gap:6px;
+      border:0; border-radius:9px; text-align:left; color:var(--text); background:transparent; padding:4px 6px;
     }
-    .summary-row:active { background: #262b35; }
-    .stripe { width: 8px; height: 30px; border-radius: 8px; }
-    .row-name { font-weight: 760; font-size: 15px; }
-    .row-qty { color: var(--muted); font-weight: 800; }
-    .row-subtotal { min-width: 72px; text-align:right; font-weight: 800; }
+    .summary-row:active { background:#29303a; }
+    .row-color { flex:none; width:6px; height:22px; border-radius:8px; }
+    .row-name { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:14px; font-weight:740; min-width:0; flex:1; }
+    .row-qty { flex:none; color:var(--muted); font-size:13px; font-weight:750; white-space:nowrap; }
+    .row-price { flex:none; font-size:13px; font-weight:820; white-space:nowrap; margin-left:auto; }
+    .summary.two-col .summary-row { padding:3px 3px; gap:4px; min-height:31px; }
+    .summary.two-col .row-color { width:5px; height:20px; }
+    .summary.two-col .row-name { font-size:12px; }
+    .summary.two-col .row-qty { font-size:11px; }
+    .summary.two-col .row-price { font-size:11px; }
 
-    .product-grid {
-      margin-top: auto;
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 9px;
-    }
-    .product-btn {
-      position: relative;
-      min-height: 92px;
-      border: 0;
-      border-radius: 20px;
-      padding: 13px 12px 12px;
-      text-align: left;
-      box-shadow: inset 0 -2px 0 rgba(0,0,0,.16), 0 5px 14px rgba(0,0,0,.14);
-      transition: transform .06s ease, filter .06s ease;
-      overflow: hidden;
-    }
-    .product-btn:nth-child(5) { grid-column: 1 / -1; min-height: 82px; }
-    .product-btn:active, .product-btn.pressed { transform: scale(.975); filter: brightness(.9); }
-    .product-name { display:block; font-size: 19px; font-weight: 900; line-height: 1.05; letter-spacing: -.02em; }
-    .product-price { display:block; margin-top: 7px; font-size: 15px; font-weight: 780; opacity: .9; }
-    .count-badge {
-      position:absolute; right: 11px; top: 10px; min-width: 30px; height: 30px;
-      padding: 0 8px; border-radius: 999px; display:flex; align-items:center; justify-content:center;
-      background: rgba(0,0,0,.24); color:white; font-size: 14px; font-weight: 900;
-      backdrop-filter: blur(3px);
-    }
-    .count-badge.zero { opacity: .32; }
-
-    .bottom-actions { display:grid; grid-template-columns: 1fr 1.25fr; gap: 9px; }
-    .action-btn {
-      min-height: 58px; border:0; border-radius: 17px; color: var(--text);
-      background: var(--panel2); font-weight: 900; font-size: 15px;
-      position: relative; overflow:hidden;
-    }
+    .push { flex:1; min-height:0; }
+    .tabs { flex:none; display:grid; grid-template-columns:1fr 1fr; gap:6px; padding:4px;
+      background:#1c2027; border:1px solid #292e37; border-radius:15px; }
+    .tab { border:0; border-radius:11px; background:transparent; color:#9ba2af; height:42px;
+      font-size:15px; font-weight:880; letter-spacing:.035em; }
+    .tab.active { color:#fff; background:#414956; box-shadow:0 1px 3px #0005; }
+    .tab:active { filter:brightness(1.15); }
+    .products { display:grid; flex:none; grid-template-columns:1fr 1fr; grid-template-rows:repeat(3,minmax(72px,1fr)); gap:8px; }
+    .product-btn { min-width:0; min-height:78px; border:0; border-radius:18px; color:white;
+      position:relative; text-align:left; padding:12px 11px 9px;
+      box-shadow:inset 0 -3px 0 #0002; transition:transform .065s,filter .065s; }
+    .product-btn:active { transform:scale(.975); filter:brightness(.87); }
+    .product-name { display:block; white-space:pre-line; font-size:clamp(15px,4.4vw,19px); line-height:1.07; font-weight:900;
+      letter-spacing:-.035em; padding-right:19px; overflow-wrap:break-word; }
+    .product-btn.multiline .product-name { font-size:16px; line-height:1.03; }
+    .product-price { display:block; font-size:14px; font-weight:780; margin-top:7px; opacity:.95; }
+    .count { position:absolute; right:8px; top:8px; min-width:28px; height:27px; padding:0 5px;
+      border-radius:50px; display:flex; align-items:center; justify-content:center;
+      color:white; background:#0003; font-size:13px; font-weight:900; }
+    .count.zero { opacity:.38; }
+    .weigh-icon { font-size:19px; font-weight:800; display:block; margin-top:6px; }
+    .bottom-actions { flex:none; display:grid; grid-template-columns:1fr 1.2fr; gap:8px; }
+    .action-btn { min-height:54px; border:0; border-radius:16px; background:#252a33;
+      color:var(--text); font-size:14px; font-weight:850; position:relative; overflow:hidden; }
     .action-btn:disabled { opacity:.35; }
-    .action-btn:active:not(:disabled) { transform:scale(.985); }
-    .new-order { background: #4c2222; }
-    .new-order::after {
-      content:""; position:absolute; inset:0; background: rgba(255,255,255,.18);
-      transform: scaleX(0); transform-origin:left center;
-    }
-    .new-order.holding::after { transform: scaleX(1); transition: transform .65s linear; }
+    .action-btn:active:not(:disabled) { transform:scale(.99); }
+    .new-btn { background:#532728; }
+    .new-btn::after { content:""; position:absolute; inset:0; background:#ffffff35;
+      transform-origin:left; transform:scaleX(0); }
+    .new-btn.holding::after { transform:scaleX(1); transition:transform .65s linear; }
 
-    .hint { text-align:center; color:#767d89; font-size:11px; margin-top:-2px; }
-
-    .modal {
-      position: fixed; inset:0; z-index:50; display:none; align-items:flex-end; justify-content:center;
-      background: rgba(0,0,0,.62); padding-top: var(--safe-top);
-    }
+    .modal { display:none; position:fixed; inset:0; z-index:50; padding-top:var(--safe-top);
+      align-items:flex-end; justify-content:center; background:#000b; }
     .modal.open { display:flex; }
-    .sheet {
-      width:100%; max-width:560px; max-height:94dvh; overflow:auto;
-      border-radius: 24px 24px 0 0; background:#171a21; border:1px solid #2a303a;
-      padding: 16px 14px calc(18px + var(--safe-bottom));
-      box-shadow: 0 -10px 40px rgba(0,0,0,.4);
-    }
-    .sheet-head { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:12px; }
-    .sheet h2 { margin:0; font-size:24px; }
-    .close-btn { width:40px; height:40px; border-radius:12px; border:0; background:#272c35; color:white; font-size:22px; }
-    .settings-item {
-      background:#20242d; border:1px solid #2b313c; border-radius:17px; padding:12px; margin-bottom:10px;
-    }
-    .settings-title { font-weight:900; margin-bottom:9px; }
-    .settings-line { display:grid; grid-template-columns: 84px 1fr; gap:10px; align-items:center; margin-bottom:10px; }
-    .settings-line label { color:var(--muted); font-size:14px; font-weight:700; }
-    .price-input {
-      width:100%; min-height:44px; border-radius:12px; border:1px solid #3a414e;
-      background:#12151b; color:white; padding:0 12px; font-weight:800; font-size:18px;
-    }
-    .swatches { display:flex; flex-wrap:wrap; gap:9px; align-items:center; }
-    .swatch {
-      width:36px; height:36px; border-radius:11px; border:3px solid transparent; padding:0;
-      box-shadow: inset 0 0 0 1px rgba(255,255,255,.16);
-    }
-    .swatch.selected { border-color:white; }
-    .custom-color {
-      width:42px; height:36px; padding:0; border:0; border-radius:10px; background:transparent; overflow:hidden;
-    }
-    .setting-toggle {
-      display:flex; justify-content:space-between; gap:12px; align-items:center;
-      background:#20242d; border:1px solid #2b313c; border-radius:17px; padding:13px;
-      margin-top:12px;
-    }
-    .toggle {
-      appearance:none; width:48px; height:28px; border-radius:999px; background:#454b55;
-      position:relative; transition:.15s; flex:none;
-    }
-    .toggle::after {
-      content:""; position:absolute; width:22px; height:22px; top:3px; left:3px; border-radius:50%;
-      background:white; transition:.15s;
-    }
-    .toggle:checked { background:#2f8a4c; }
-    .toggle:checked::after { transform:translateX(20px); }
+    .sheet { background:#1a1e26; border:1px solid #353b47; border-radius:22px 22px 0 0;
+      padding:15px 13px calc(var(--safe-bottom) + 15px); width:100%; max-width:560px;
+      max-height:94dvh; overflow:auto; }
+    .sheet-header { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:12px; }
+    .sheet-title { margin:0; font-size:23px; font-weight:900; }
+    .close-btn { width:40px; height:40px; color:#fff; border:0; border-radius:12px; background:#2d333f; font-size:25px; }
+    .primary { min-height:52px; width:100%; margin-top:10px; border:0; border-radius:14px;
+      font-weight:900; background:#f2f4f6; color:#10131a; font-size:17px; }
+    .settings-item { padding:11px; border-radius:15px; background:#232833; margin-bottom:10px; border:1px solid #303845; }
+    .settings-item h3 { margin:0 0 9px; font-size:16px; }
+    .setting-row { display:grid; grid-template-columns:68px 1fr; align-items:center; gap:9px; margin-top:9px; }
+    .setting-row label { font-size:13px; color:var(--muted); font-weight:750; }
+    .price-input { width:100%; height:42px; border-radius:11px; border:1px solid #424957;
+      background:#131820; color:#fff; padding:0 10px; font-size:17px; font-weight:850; }
+    .swatches { display:flex; flex-wrap:wrap; gap:7px; align-items:center; }
+    .swatch { width:30px; height:30px; border:2px solid transparent; border-radius:10px; }
+    .swatch.selected { border:3px solid white; }
+    .custom-color { width:33px; height:32px; padding:0; border:0; background:transparent; }
+    .toggle-row { display:flex; align-items:center; justify-content:space-between; background:#252a34;
+      border:1px solid #343a48; border-radius:15px; padding:13px 10px; gap:12px; font-weight:750; }
+    .toggle-row input { width:25px; height:25px; accent-color:#2d9d57; }
+    .muted-note { color:var(--muted); line-height:1.45; font-size:12px; }
+    .secondary { width:100%; margin-top:9px; padding:12px; background:transparent; border:1px solid #3a4352;
+      border-radius:13px; color:#c8ced8; font-weight:750; }
 
-    .save-btn {
-      width:100%; min-height:56px; border:0; border-radius:17px; margin-top:14px;
-      font-weight:900; font-size:17px; background:#f2f3f5; color:#111318;
-    }
-    .reset-btn {
-      width:100%; min-height:46px; border:1px solid #3a414c; border-radius:14px; margin-top:10px;
-      background:transparent; color:#c7cbd2; font-weight:750;
-    }
-    .settings-note { color:var(--muted); font-size:12px; line-height:1.4; margin:8px 2px 0; }
+    .qty-modal { text-align:center; }
+    .color-strip { width:50px; height:7px; border-radius:6px; margin:0 auto 9px; }
+    .qty-controls { display:grid; grid-template-columns:1fr 1fr 1fr; align-items:center; gap:12px; margin:22px 0 15px; }
+    .qty-controls button { height:64px; background:#313744; color:white; border:0; border-radius:16px; font-size:31px; font-weight:800; }
+    .qty-controls button:disabled { opacity:.35; }
+    .qty-number { font-size:42px; font-weight:900; }
 
-    .qty-sheet { text-align:center; padding-top:22px; }
-    .qty-color { width:44px; height:8px; border-radius:9px; margin:0 auto 12px; }
-    .qty-title { font-size:22px; font-weight:900; margin:0; }
-    .qty-price { color:var(--muted); margin-top:4px; }
-    .qty-controls { display:grid; grid-template-columns: 1fr 1fr 1fr; gap:12px; align-items:center; margin:20px 0; }
-    .qty-btn {
-      height:64px; border:0; border-radius:18px; background:#2a2f39; color:white;
-      font-size:32px; font-weight:800;
+    .money-display { padding:12px 8px; text-align:center; font-size:46px; font-weight:900; letter-spacing:-.04em;
+      margin:4px 0 10px; background:#10141b; border-radius:17px; border:1px solid #323947; }
+    .numpad { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+    .numpad button { min-height:57px; border:0; border-radius:14px; background:#323946;
+      color:white; font-size:26px; font-weight:790; }
+    .numpad button:active { background:#4a5565; }
+    .numpad .special { background:#424b59; font-size:17px; }
+    .money-hint { text-align:center; color:#a9afbc; font-size:13px; margin-top:10px; }
+    .primary:disabled { opacity:.4; }
+    .weight-entries { margin-top:13px; }
+    .weight-row { display:grid; grid-template-columns:1fr 55px 55px; align-items:center; gap:6px;
+      min-height:50px; border-top:1px solid #353c47; font-size:17px; font-weight:800; }
+    .weight-row button { height:39px; border:0; border-radius:11px; background:#303746; color:white; font-size:17px; }
+    .weight-row .delete { background:#512b30; }
+    .toast { position:fixed; left:50%; transform:translate(-50%,15px); bottom:calc(86px + var(--safe-bottom));
+      z-index:90; border-radius:100px; background:#edf0f4; color:#151922; padding:9px 16px;
+      font-size:13px; font-weight:850; opacity:0; pointer-events:none; transition:opacity .18s,transform .18s; }
+    .toast.show { opacity:1; transform:translate(-50%,0); }
+    @media (max-height:740px) {
+      .app { gap:6px; }
+      .total-card { padding:7px 47px 8px; }
+      .total { font-size:39px; }
+      .summary-row { min-height:30px; padding:2px 5px; }
+      .summary.two-col .summary-row { min-height:28px; }
+      .tabs .tab { height:36px; }
+      .product-btn { min-height:70px; padding:9px; }
+      .product-price { margin-top:5px; }
+      .action-btn { min-height:48px; }
     }
-    .qty-number { font-size:40px; font-weight:900; }
-    .qty-close { width:100%; height:52px; border:0; border-radius:16px; background:#efeff1; color:#111; font-weight:900; }
-
-    .toast {
-      position:fixed; left:50%; bottom:calc(92px + var(--safe-bottom)); z-index:90;
-      transform:translate(-50%, 18px); opacity:0; pointer-events:none;
-      background:#eef0f3; color:#101218; padding:10px 15px; border-radius:999px;
-      font-weight:850; font-size:14px; transition:.18s;
-      box-shadow:0 8px 30px rgba(0,0,0,.28);
+    @media (max-width:360px) {
+      .summary.two-col .summary-row { gap:3px; padding:2px; }
+      .summary.two-col .row-name { font-size:11px; }
+      .summary.two-col .row-qty,.summary.two-col .row-price { font-size:10px; }
+      .product-name { font-size:15px; }
     }
-    .toast.show { opacity:1; transform:translate(-50%, 0); }
-
-    @media (min-height: 800px) {
-      .product-btn { min-height: 100px; }
-    }
-    @media (max-height: 670px) {
-      .app { gap:7px; padding-top:calc(2px + var(--safe-top)); }
-      .icon-btn { width:38px; height:38px; top:7px; right:7px; }
-      .total-card { padding:8px 50px 9px; }
-      .total { font-size:42px; }
-      .summary-row { min-height: 40px; padding-top:4px; padding-bottom:4px; }
-      .stripe { height:26px; }
-      .product-btn { min-height:70px; }
-      .product-btn:nth-child(5) { min-height:64px; }
-      .product-name { font-size:17px; }
-      .bottom-actions .action-btn { min-height:48px; }
-      .hint { display:none; }
+    @media (max-height:625px) {
+      .app { height:auto; min-height:100dvh; }
+      .push { flex:0; }
     }
   </style>
 </head>
 <body>
   <main class="app">
-    <section class="total-card" aria-live="polite">
-      <button id="settingsBtn" class="icon-btn" aria-label="Impostazioni" title="Impostazioni">⚙︎</button>
+    <section class="total-card" aria-label="Totale ordine">
+      <button id="settingsBtn" class="settings-btn" aria-label="Impostazioni">⚙</button>
       <div class="total-label">TOTALE</div>
-      <div id="total" class="total">0,00 €</div>
+      <div id="total" class="total" aria-live="polite">0,00 €</div>
     </section>
-
-    <section id="summary" class="summary" aria-label="Riepilogo ordine"></section>
-
-    <section id="productGrid" class="product-grid" aria-label="Articoli"></section>
-
+    <section id="summary" class="summary empty-summary" aria-label="Riepilogo ordine">
+      <div class="empty-text">Nessun articolo</div>
+    </section>
+    <div class="push"></div>
+    <nav class="tabs" aria-label="Categorie prodotti">
+      <button id="tabFood" class="tab active" aria-pressed="true">CIBO</button>
+      <button id="tabDrinks" class="tab" aria-pressed="false">BEVANDE</button>
+    </nav>
+    <section id="productGrid" class="products" aria-label="Prodotti da aggiungere"></section>
     <section class="bottom-actions">
       <button id="undoBtn" class="action-btn" disabled>↶ ANNULLA</button>
-      <button id="newOrderBtn" class="action-btn new-order">TIENI PREMUTO<br>NUOVO ORDINE</button>
+      <button id="newOrderBtn" class="action-btn new-btn">TIENI PREMUTO<br>NUOVO ORDINE</button>
     </section>
-    <div class="hint">Tocca una riga del riepilogo per correggere la quantità</div>
   </main>
 
-  <div id="settingsModal" class="modal" role="dialog" aria-modal="true" aria-label="Impostazioni">
+  <section id="settingsModal" class="modal" role="dialog" aria-label="Impostazioni" aria-modal="true">
     <div class="sheet">
-      <div class="sheet-head">
-        <h2>Impostazioni</h2>
-        <button id="settingsClose" class="close-btn" aria-label="Chiudi">×</button>
-      </div>
+      <div class="sheet-header"><h2 class="sheet-title">Impostazioni</h2><button class="close-btn" data-close="settingsModal" aria-label="Chiudi">×</button></div>
       <div id="settingsList"></div>
-
-      <label class="setting-toggle">
-        <span>
-          <strong>Blocca impostazioni</strong><br>
-          <small style="color:var(--muted)">Se attivo, tieni premuto ⚙︎ per 1,5 secondi</small>
-        </span>
-        <input id="lockSettings" class="toggle" type="checkbox">
-      </label>
-
-      <button id="saveSettings" class="save-btn">SALVA IMPOSTAZIONI</button>
-      <button id="resetSettings" class="reset-btn">Ripristina prezzi e colori iniziali</button>
-      <p class="settings-note">Prezzi, colori e ordine corrente vengono salvati solo su questo dispositivo.</p>
+      <label class="toggle-row"><span>Blocca impostazioni<br><small class="muted-note">Per aprirle servirà tenere premuto ⚙</small></span>
+        <input type="checkbox" id="lockSettings"></label>
+      <button id="saveSettingsBtn" class="primary">SALVA IMPOSTAZIONI</button>
+      <button id="resetSettingsBtn" class="secondary">Ripristina prezzi e colori iniziali</button>
+      <p class="muted-note">Prezzi e colori rimangono salvati su questo telefono. Il pulsante “Al peso” inserisce direttamente un importo, senza usare un prezzo al kg.</p>
     </div>
-  </div>
+  </section>
 
-  <div id="qtyModal" class="modal" role="dialog" aria-modal="true" aria-label="Modifica quantità">
-    <div class="sheet qty-sheet">
-      <div id="qtyColor" class="qty-color"></div>
-      <h2 id="qtyTitle" class="qty-title"></h2>
-      <div id="qtyPrice" class="qty-price"></div>
-      <div class="qty-controls">
-        <button id="qtyMinus" class="qty-btn" aria-label="Diminuisci">−</button>
-        <div id="qtyNumber" class="qty-number">0</div>
-        <button id="qtyPlus" class="qty-btn" aria-label="Aumenta">+</button>
+  <section id="qtyModal" class="modal" role="dialog" aria-label="Modifica quantità" aria-modal="true">
+    <div class="sheet qty-modal">
+      <div id="qtyColor" class="color-strip"></div>
+      <h2 id="qtyTitle" class="sheet-title"></h2>
+      <p id="qtyPrice" class="muted-note"></p>
+      <div class="qty-controls"><button id="qtyMinus" aria-label="Diminuisci">−</button><span id="qtyNumber" class="qty-number">0</span><button id="qtyPlus" aria-label="Aumenta">+</button></div>
+      <button class="primary" data-close="qtyModal">CHIUDI</button>
+    </div>
+  </section>
+
+  <section id="moneyModal" class="modal" role="dialog" aria-label="Inserimento prezzo al peso" aria-modal="true">
+    <div class="sheet">
+      <div class="sheet-header"><h2 id="moneyTitle" class="sheet-title">Prezzo dalla bilancia</h2><button class="close-btn" data-close="moneyModal" aria-label="Chiudi">×</button></div>
+      <div id="moneyDisplay" class="money-display" aria-live="polite">0,00 €</div>
+      <div class="numpad" id="numpad">
+        <button data-key="1">1</button><button data-key="2">2</button><button data-key="3">3</button>
+        <button data-key="4">4</button><button data-key="5">5</button><button data-key="6">6</button>
+        <button data-key="7">7</button><button data-key="8">8</button><button data-key="9">9</button>
+        <button data-key="clear" class="special">AZZERA</button><button data-key="0">0</button><button data-key="back" class="special">⌫</button>
       </div>
-      <button id="qtyClose" class="qty-close">CHIUDI</button>
+      <div class="money-hint">Digita le cifre senza virgola: <b>1250</b> = <b>12,50 €</b></div>
+      <button id="moneyConfirm" class="primary" disabled>AGGIUNGI IMPORTO</button>
     </div>
-  </div>
+  </section>
 
+  <section id="weightModal" class="modal" role="dialog" aria-label="Dettaglio prodotti al peso" aria-modal="true">
+    <div class="sheet">
+      <div class="sheet-header"><h2 class="sheet-title">Prodotti al peso</h2><button class="close-btn" data-close="weightModal" aria-label="Chiudi">×</button></div>
+      <p class="muted-note">Tocca la matita per correggere il prezzo; il cestino elimina quella voce.</p>
+      <div id="weightEntries" class="weight-entries"></div>
+      <button id="weightAddMore" class="primary">+ AGGIUNGI ALTRO IMPORTO</button>
+    </div>
+  </section>
   <div id="toast" class="toast" aria-live="polite"></div>
-
-<script>
-(() => {
-  "use strict";
-
-  const DEFAULTS = [
-    { id:"p1", name:"Piada 1 gusto", short:"1 GUSTO", price:800, color:"#2E7D32" },
-    { id:"p2", name:"Piada 2 gusti", short:"2 GUSTI", price:850, color:"#1565C0" },
-    { id:"p3", name:"Piada 3 gusti", short:"3 GUSTI", price:900, color:"#6A1B9A" },
-    { id:"pat", name:"Patatine", short:"PATATINE", price:400, color:"#EF6C00" },
-    { id:"acq", name:"Acqua", short:"ACQUA", price:200, color:"#0288D1" }
-  ];
-  const SWATCHES = ["#2E7D32","#1565C0","#6A1B9A","#EF6C00","#C62828","#F9A825","#6D4C41","#455A64","#00897B","#AD1457"];
-  const SETTINGS_KEY = "cassaPiadine.settings.v1";
-  const ORDER_KEY = "cassaPiadine.order.v1";
-  const ACTIONS_KEY = "cassaPiadine.actions.v1";
-
-  const $ = sel => document.querySelector(sel);
-  const totalEl = $("#total"), summaryEl = $("#summary"), productGrid = $("#productGrid");
-  const undoBtn = $("#undoBtn"), newOrderBtn = $("#newOrderBtn"), settingsBtn = $("#settingsBtn");
-  const settingsModal = $("#settingsModal"), qtyModal = $("#qtyModal");
-  const toastEl = $("#toast");
-
-  let settings = loadSettings();
-  let order = loadOrder();
-  let actions = loadActions();
-  let editId = null;
-  let settingsHoldTimer = null;
-  let newOrderTimer = null;
-
-  function cloneDefaults() {
-    return DEFAULTS.map(x => ({...x}));
-  }
-  function loadSettings() {
-    try {
-      const raw = JSON.parse(localStorage.getItem(SETTINGS_KEY) || "null");
-      if (!raw || !Array.isArray(raw.items)) throw new Error();
-      const items = cloneDefaults().map(def => {
-        const saved = raw.items.find(x => x.id === def.id) || {};
-        return {
-          ...def,
-          price: Number.isInteger(saved.price) && saved.price >= 0 ? saved.price : def.price,
-          color: /^#[0-9a-f]{6}$/i.test(saved.color || "") ? saved.color : def.color
-        };
-      });
-      return { items, locked: !!raw.locked };
-    } catch {
-      return { items: cloneDefaults(), locked:false };
-    }
-  }
-  function loadOrder() {
-    try {
-      const raw = JSON.parse(localStorage.getItem(ORDER_KEY) || "{}");
-      const out = {};
-      DEFAULTS.forEach(x => out[x.id] = Number.isInteger(raw[x.id]) && raw[x.id] >= 0 ? raw[x.id] : 0);
-      return out;
-    } catch {
-      return Object.fromEntries(DEFAULTS.map(x => [x.id, 0]));
-    }
-  }
-  function loadActions() {
-    try {
-      const raw = JSON.parse(localStorage.getItem(ACTIONS_KEY) || "[]");
-      if (!Array.isArray(raw)) return [];
-      return raw.filter(a => DEFAULTS.some(x => x.id === a.id) && (a.delta === 1 || a.delta === -1)).slice(-100);
-    } catch { return []; }
-  }
-  function saveSettingsData() {
-    localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
-  }
-  function saveOrderData() {
-    localStorage.setItem(ORDER_KEY, JSON.stringify(order));
-    localStorage.setItem(ACTIONS_KEY, JSON.stringify(actions.slice(-100)));
-  }
-
-  function euro(cents) {
-    return (cents / 100).toLocaleString("it-IT", {style:"currency", currency:"EUR"});
-  }
-  function textColor(hex) {
-    const c = hex.replace("#","");
-    const r = parseInt(c.slice(0,2),16), g = parseInt(c.slice(2,4),16), b = parseInt(c.slice(4,6),16);
-    const luminance = (0.299*r + 0.587*g + 0.114*b);
-    return luminance > 165 ? "#111318" : "#ffffff";
-  }
-  function item(id) { return settings.items.find(x => x.id === id); }
-  function haptic(ms=10) {
-    try { if (navigator.vibrate) navigator.vibrate(ms); } catch {}
-  }
-  function showToast(msg) {
-    toastEl.textContent = msg;
-    toastEl.classList.add("show");
-    clearTimeout(showToast.t);
-    showToast.t = setTimeout(() => toastEl.classList.remove("show"), 1400);
-  }
-
-  function render() {
-    const total = settings.items.reduce((sum, p) => sum + p.price * (order[p.id] || 0), 0);
-    totalEl.textContent = euro(total);
-
-    summaryEl.innerHTML = "";
-    const selected = settings.items.filter(p => order[p.id] > 0);
-    if (!selected.length) {
-      summaryEl.innerHTML = '<div class="empty">Nessun articolo</div>';
-    } else {
-      selected.forEach(p => {
-        const row = document.createElement("button");
-        row.className = "summary-row";
-        row.dataset.id = p.id;
-        row.innerHTML = `
-          <span class="stripe" style="background:${p.color}"></span>
-          <span class="row-name">${p.name}</span>
-          <span class="row-qty">× ${order[p.id]}</span>
-          <span class="row-subtotal">${euro(p.price * order[p.id])}</span>`;
-        row.addEventListener("click", () => openQty(p.id));
-        summaryEl.appendChild(row);
-      });
-    }
-
-    productGrid.innerHTML = "";
-    settings.items.forEach(p => {
-      const btn = document.createElement("button");
-      btn.className = "product-btn";
-      btn.dataset.id = p.id;
-      btn.style.background = p.color;
-      btn.style.color = textColor(p.color);
-      btn.innerHTML = `
-        <span class="product-name">${p.short}</span>
-        <span class="product-price">${euro(p.price)}</span>
-        <span class="count-badge ${order[p.id] ? "" : "zero"}">${order[p.id] || 0}</span>`;
-      btn.addEventListener("click", () => changeQty(p.id, 1, true));
-      productGrid.appendChild(btn);
-    });
-
-    undoBtn.disabled = actions.length === 0;
-  }
-
-  function changeQty(id, delta, track=true) {
-    const current = order[id] || 0;
-    if (delta < 0 && current <= 0) return;
-    order[id] = Math.max(0, current + delta);
-    if (track) actions.push({id, delta});
-    saveOrderData();
-    haptic(8);
-    render();
-    if (qtyModal.classList.contains("open") && editId === id) renderQty();
-  }
-
-  function undo() {
-    const a = actions.pop();
-    if (!a) return;
-    order[a.id] = Math.max(0, (order[a.id] || 0) - a.delta);
-    saveOrderData();
-    haptic(12);
-    render();
-    showToast("Ultima azione annullata");
-  }
-
-  function resetOrder() {
-    Object.keys(order).forEach(k => order[k] = 0);
-    actions = [];
-    saveOrderData();
-    haptic(25);
-    render();
-    showToast("Nuovo ordine");
-  }
-
-  function openQty(id) {
-    editId = id;
-    renderQty();
-    qtyModal.classList.add("open");
-  }
-  function renderQty() {
-    const p = item(editId);
-    if (!p) return;
-    $("#qtyTitle").textContent = p.name;
-    $("#qtyPrice").textContent = euro(p.price) + " cad.";
-    $("#qtyColor").style.background = p.color;
-    $("#qtyNumber").textContent = order[p.id] || 0;
-    $("#qtyMinus").disabled = (order[p.id] || 0) === 0;
-  }
-
-  function parsePriceToCents(value) {
-    const s = String(value).trim().replace(/[€\s]/g,"").replace(",",".");
-    if (!/^\d+(\.\d{1,2})?$/.test(s)) return null;
-    const n = Number(s);
-    if (!Number.isFinite(n) || n < 0 || n > 9999) return null;
-    return Math.round(n * 100);
-  }
-
-  function buildSettings() {
-    const list = $("#settingsList");
-    list.innerHTML = "";
-    settings.items.forEach(p => {
-      const box = document.createElement("div");
-      box.className = "settings-item";
-      box.dataset.id = p.id;
-      box.innerHTML = `
-        <div class="settings-title">${p.name}</div>
-        <div class="settings-line">
-          <label>Prezzo</label>
-          <input class="price-input" inputmode="decimal" autocomplete="off" value="${(p.price/100).toFixed(2).replace(".",",")}">
-        </div>
-        <div class="settings-line">
-          <label>Colore</label>
-          <div class="swatches"></div>
-        </div>`;
-      const swatches = box.querySelector(".swatches");
-      SWATCHES.forEach(color => {
-        const b = document.createElement("button");
-        b.type = "button";
-        b.className = "swatch" + (color.toLowerCase() === p.color.toLowerCase() ? " selected" : "");
-        b.style.background = color;
-        b.dataset.color = color;
-        b.setAttribute("aria-label", "Colore " + color);
-        b.addEventListener("click", () => {
-          box.dataset.selectedColor = color;
-          swatches.querySelectorAll(".swatch").forEach(x => x.classList.remove("selected"));
-          b.classList.add("selected");
-          custom.value = color;
-        });
-        swatches.appendChild(b);
-      });
-      const custom = document.createElement("input");
-      custom.type = "color";
-      custom.className = "custom-color";
-      custom.value = p.color;
-      custom.setAttribute("aria-label","Colore personalizzato");
-      custom.addEventListener("input", () => {
-        box.dataset.selectedColor = custom.value;
-        swatches.querySelectorAll(".swatch").forEach(x => x.classList.remove("selected"));
-      });
-      swatches.appendChild(custom);
-      box.dataset.selectedColor = p.color;
-      list.appendChild(box);
-    });
-    $("#lockSettings").checked = settings.locked;
-  }
-
-  function openSettings(force=false) {
-    if (settings.locked && !force) return;
-    buildSettings();
-    settingsModal.classList.add("open");
-  }
-
-  function saveSettings() {
-    const boxes = [...document.querySelectorAll(".settings-item")];
-    const nextItems = [];
-    for (const box of boxes) {
-      const old = item(box.dataset.id);
-      const cents = parsePriceToCents(box.querySelector(".price-input").value);
-      if (cents === null) {
-        box.querySelector(".price-input").focus();
-        showToast("Controlla il prezzo");
-        return;
+  <script>
+  (()=>{
+    'use strict';
+    const defs = [
+      {id:'p1',name:'Piada 1 gusto',short:'1 GUSTO',compact:'1 gusto',price:800,color:'#2E7D32',group:'food'},
+      {id:'p2',name:'Piada 2 gusti',short:'2 GUSTI',compact:'2 gusti',price:850,color:'#1565C0',group:'food'},
+      {id:'p3',name:'Piada 3 gusti',short:'3 GUSTI',compact:'3 gusti',price:900,color:'#6A1B9A',group:'food'},
+      {id:'vuota',name:'Piada vuota',short:'PIADA\nVUOTA',compact:'Vuota',price:120,color:'#AD1457',group:'food'},
+      {id:'pat',name:'Patatine',short:'PATATINE',compact:'Patatine',price:400,color:'#EF6C00',group:'food'},
+      {id:'acq',name:'Acqua',short:'ACQUA',compact:'Acqua',price:200,color:'#0288D1',group:'drinks'},
+      {id:'birra',name:'Birra',short:'BIRRA',compact:'Birra',price:400,color:'#B8860B',group:'drinks'},
+      {id:'bibita',name:'Bibita',short:'BIBITA',compact:'Bibita',price:300,color:'#C62828',group:'drinks'},
+      {id:'calice',name:'Bicchiere di vino',short:'VINO\nBICCHIERE',compact:'Vino bicch.',price:200,color:'#8E244D',group:'drinks'},
+      {id:'bottiglia',name:'Bottiglia di vino',short:'VINO\nBOTTIGLIA',compact:'Vino bott.',price:800,color:'#5D4037',group:'drinks'},
+      {id:'peso',name:'Al peso',short:'AL PESO',compact:'Al peso',price:null,color:'#455A64',group:'both'}
+    ];
+    const palette=['#2E7D32','#1565C0','#6A1B9A','#EF6C00','#C62828','#F9A825','#6D4C41','#455A64','#0288D1','#AD1457','#00897B'];
+    const SETTINGS_KEY='cassaPiadine.settings.v1', LEGACY_ORDER='cassaPiadine.order.v1';
+    const STATE_KEY='cassaPiadine.state.v3', maxHistory=45;
+    const $=id=>document.getElementById(id);
+    const blank=()=>Object.fromEntries(defs.filter(p=>p.price!==null).map(p=>[p.id,0]));
+    const money=n=>(n/100).toLocaleString('it-IT',{style:'currency',currency:'EUR'});
+    const storage={ok:true};
+    function toast(msg){const el=$('toast');el.textContent=msg;el.classList.add('show');clearTimeout(toast.timer);toast.timer=setTimeout(()=>el.classList.remove('show'),1600);}
+    function save(k,v){try{localStorage.setItem(k,JSON.stringify(v));storage.ok=true;}catch(e){storage.ok=false;toast('ATTENZIONE: salvataggio non disponibile');}}
+    function load(k){try{return JSON.parse(localStorage.getItem(k)||'null');}catch{return null;}}
+    function defaults(){return defs.map(p=>({...p}));}
+    const oldSettings=load(SETTINGS_KEY);
+    let settings={items:defaults().map(d=>{
+      const prior=Array.isArray(oldSettings?.items)?oldSettings.items.find(x=>x.id===d.id):null;
+      return {...d,price: d.price===null ? null : Number.isInteger(prior?.price)&&prior.price>=0&&prior.price<=999999?prior.price:d.price,
+        color:/^#[0-9a-f]{6}$/i.test(prior?.color||'')?prior.color:d.color};
+    }),locked:!!oldSettings?.locked};
+    const oldOrder=load(LEGACY_ORDER), oldState=load(STATE_KEY);
+    function checkCounts(source){const obj=blank();for(const key in obj){const n=source?.[key];if(Number.isSafeInteger(n)&&n>=0&&n<=9999)obj[key]=n;}return obj;}
+    function checkWeights(source){if(!Array.isArray(source))return [];return source.filter(x=>x&&Number.isInteger(x.price)&&x.price>0&&x.price<=999999&&Number.isSafeInteger(x.id)).map(x=>({id:x.id,price:x.price})).slice(0,200);}
+    let state={counts:checkCounts(oldState?.counts||oldOrder),weights:checkWeights(oldState?.weights),nextId:Number.isSafeInteger(oldState?.nextId)&&oldState.nextId>0?oldState.nextId:1};
+    state.nextId=Math.max(state.nextId,...state.weights.map(x=>x.id+1),1);
+    let history=Array.isArray(oldState?.history)?oldState.history.filter(x=>x&&x.counts&&Array.isArray(x.weights)).slice(-maxHistory):[];
+    let tab='food',editId=null,moneyEditId=null,moneyDigits='',holdNew=null,holdSettings=null,holdUnlocked=false;
+    const get=id=>settings.items.find(p=>p.id===id);
+    const snapshot=()=>({counts:{...state.counts},weights:state.weights.map(x=>({...x})),nextId:state.nextId});
+    function persist(){save(STATE_KEY,{...snapshot(),history});}
+    function change(mutator){history.push(snapshot());if(history.length>maxHistory)history.shift();mutator();persist();render();}
+    function calcTotal(){return settings.items.reduce((t,p)=>t+(p.price===null?0:p.price*(state.counts[p.id]||0)),0)+state.weights.reduce((t,p)=>t+p.price,0);}
+    function contrast(hex){let c=hex.slice(1);const r=parseInt(c.slice(0,2),16),g=parseInt(c.slice(2,4),16),b=parseInt(c.slice(4,6),16);return (r*.299+g*.587+b*.114)>163?'#141619':'white';}
+    function vibrate(){try{navigator.vibrate?.(8);}catch{}}
+    function moneyHTML(p){return p.price===null?'PREZZO LIBERO':money(p.price);}
+    function addCount(id,delta){if(delta<0&&state.counts[id]<=0)return;change(()=>state.counts[id]=Math.max(0,state.counts[id]+delta));vibrate();if($('qtyModal').classList.contains('open'))showQty();}
+    function selectTab(next){tab=next;render();}
+    function makeProduct(p){const b=document.createElement('button');b.className='product-btn'+(p.short.includes('\n')?' multiline':'');b.style.background=p.color;b.style.color=contrast(p.color);
+      const n=document.createElement('span');n.className='product-name';n.textContent=p.short;
+      const s=document.createElement('span');s.className=p.id==='peso'?'weigh-icon':'product-price';s.textContent=p.id==='peso'?'INSERISCI €':moneyHTML(p);
+      b.append(n,s);
+      const count=p.id==='peso'?state.weights.length:state.counts[p.id];if(count>0){const badge=document.createElement('span');badge.className='count';badge.textContent=count;b.append(badge);}
+      b.addEventListener('click',()=>{if(p.id==='peso')openMoney();else addCount(p.id,1);});return b;}
+    function orderEntries(){const base=settings.items.filter(p=>p.price!==null&&state.counts[p.id]>0).map(p=>({id:p.id,name:p.name,short:p.compact,qty:state.counts[p.id],price:p.price*state.counts[p.id],color:p.color}));
+      if(state.weights.length){const p=get('peso');base.push({id:'peso',name:'Al peso',short:'Al peso',qty:state.weights.length,price:state.weights.reduce((a,x)=>a+x.price,0),color:p.color});}return base;}
+    function render(){
+      $('total').textContent=money(calcTotal());
+      $('tabFood').classList.toggle('active',tab==='food');$('tabDrinks').classList.toggle('active',tab==='drinks');
+      $('tabFood').setAttribute('aria-pressed',String(tab==='food'));$('tabDrinks').setAttribute('aria-pressed',String(tab==='drinks'));
+      const grid=$('productGrid');grid.replaceChildren();settings.items.filter(p=>p.group===tab||p.group==='both').forEach(p=>grid.append(makeProduct(p)));
+      const summary=$('summary'),entries=orderEntries();summary.replaceChildren();summary.classList.toggle('empty-summary',!entries.length);
+      summary.classList.toggle('two-col',entries.length>5);
+      if(!entries.length){const d=document.createElement('div');d.className='empty-text';d.textContent='Nessun articolo';summary.append(d);}
+      for(const ent of entries){const row=document.createElement('button');row.className='summary-row';row.title=ent.name+' - '+money(ent.price);
+        const col=document.createElement('span');col.className='row-color';col.style.background=ent.color;
+        const name=document.createElement('span');name.className='row-name';name.textContent=entries.length>5?ent.short:ent.name;
+        const qty=document.createElement('span');qty.className='row-qty';qty.textContent='×'+ent.qty;
+        const pr=document.createElement('span');pr.className='row-price';pr.textContent=money(ent.price);
+        row.append(col,name,qty,pr);row.addEventListener('click',()=>ent.id==='peso'?openWeights():openQty(ent.id));summary.append(row);
       }
-      nextItems.push({...old, price:cents, color:box.dataset.selectedColor || old.color});
+      $('undoBtn').disabled=history.length===0;
     }
-    settings.items = nextItems;
-    settings.locked = $("#lockSettings").checked;
-    saveSettingsData();
-    settingsModal.classList.remove("open");
-    render();
-    haptic(15);
-    showToast("Impostazioni salvate");
-  }
-
-  function restoreSettings() {
-    settings = {items:cloneDefaults(), locked:false};
-    saveSettingsData();
-    buildSettings();
-    render();
-    showToast("Valori iniziali ripristinati");
-  }
-
-  // Settings: tap normally when unlocked; long-press when locked.
-  settingsBtn.addEventListener("pointerdown", (e) => {
-    if (!settings.locked) return;
-    e.preventDefault();
-    settingsBtn.style.transform = "scale(.94)";
-    settingsHoldTimer = setTimeout(() => {
-      settingsHoldTimer = null;
-      settingsBtn.style.transform = "";
-      haptic(20);
-      openSettings(true);
-    }, 1500);
-  });
-  ["pointerup","pointercancel","pointerleave"].forEach(evt => settingsBtn.addEventListener(evt, () => {
-    if (settingsHoldTimer) clearTimeout(settingsHoldTimer);
-    settingsHoldTimer = null;
-    settingsBtn.style.transform = "";
-  }));
-  settingsBtn.addEventListener("click", () => {
-    if (!settings.locked) openSettings(true);
-    else showToast("Tieni premuto ⚙︎");
-  });
-
-  // New order: deliberate long press.
-  const cancelNewOrderHold = () => {
-    if (newOrderTimer) clearTimeout(newOrderTimer);
-    newOrderTimer = null;
-    newOrderBtn.classList.remove("holding");
-  };
-  newOrderBtn.addEventListener("pointerdown", (e) => {
-    e.preventDefault();
-    cancelNewOrderHold();
-    // Force reflow so progress restarts every time.
-    void newOrderBtn.offsetWidth;
-    newOrderBtn.classList.add("holding");
-    newOrderTimer = setTimeout(() => {
-      newOrderTimer = null;
-      newOrderBtn.classList.remove("holding");
-      resetOrder();
-    }, 650);
-  });
-  ["pointerup","pointercancel","pointerleave"].forEach(evt => newOrderBtn.addEventListener(evt, cancelNewOrderHold));
-  newOrderBtn.addEventListener("contextmenu", e => e.preventDefault());
-
-  undoBtn.addEventListener("click", undo);
-  $("#settingsClose").addEventListener("click", () => settingsModal.classList.remove("open"));
-  $("#saveSettings").addEventListener("click", saveSettings);
-  $("#resetSettings").addEventListener("click", restoreSettings);
-  $("#qtyClose").addEventListener("click", () => qtyModal.classList.remove("open"));
-  $("#qtyMinus").addEventListener("click", () => editId && changeQty(editId, -1, true));
-  $("#qtyPlus").addEventListener("click", () => editId && changeQty(editId, 1, true));
-
-  [settingsModal, qtyModal].forEach(modal => modal.addEventListener("click", e => {
-    if (e.target === modal) modal.classList.remove("open");
-  }));
-
-  document.addEventListener("visibilitychange", () => {
-    if (document.visibilityState === "hidden") saveOrderData();
-  });
-  window.addEventListener("pagehide", saveOrderData);
-
-  if ("serviceWorker" in navigator) {
-    let swRefreshing = false;
-    navigator.serviceWorker.addEventListener("controllerchange", () => {
-      if (swRefreshing) return;
-      swRefreshing = true;
-      window.location.reload();
+    function openModal(id){document.querySelectorAll('.modal.open').forEach(m=>m.classList.remove('open'));$(id).classList.add('open');}
+    function closeModal(id){$(id).classList.remove('open');}
+    function openQty(id){editId=id;showQty();openModal('qtyModal');}
+    function showQty(){const p=get(editId);$('qtyColor').style.background=p.color;$('qtyTitle').textContent=p.name;
+      $('qtyPrice').textContent=money(p.price)+' cad.';$('qtyNumber').textContent=state.counts[editId];$('qtyMinus').disabled=state.counts[editId]===0;}
+    function openMoney(id=null){moneyEditId=id;const old=state.weights.find(x=>x.id===id);
+      moneyDigits=old?String(old.price):'';$('moneyTitle').textContent=id===null?'Prezzo dalla bilancia':'Correggi importo';updateMoney();openModal('moneyModal');}
+    function updateMoney(){const cents=Number(moneyDigits||'0');$('moneyDisplay').textContent=money(cents);
+      $('moneyConfirm').disabled=cents===0;$('moneyConfirm').textContent=(moneyEditId===null?'AGGIUNGI ':'SALVA ')+money(cents);}
+    function digit(key){if(key==='clear')moneyDigits='';else if(key==='back')moneyDigits=moneyDigits.slice(0,-1);
+      else if(/^\d$/.test(key)){const next=(moneyDigits+key).replace(/^0+(?=\d)/,'');if(next.length<=6)moneyDigits=next;}
+      updateMoney();}
+    function commitMoney(){const cents=Number(moneyDigits||'0');if(cents<1||cents>999999)return;
+      const edit=moneyEditId;change(()=>{if(edit===null)state.weights.push({id:state.nextId++,price:cents});else{const item=state.weights.find(w=>w.id===edit);if(item)item.price=cents;}});
+      closeModal('moneyModal');vibrate();toast(edit===null?'Importo aggiunto':'Importo modificato');}
+    function openWeights(){renderWeights();openModal('weightModal');}
+    function renderWeights(){const area=$('weightEntries');area.replaceChildren();state.weights.forEach((w,i)=>{
+      const row=document.createElement('div');row.className='weight-row';const value=document.createElement('span');value.textContent=(i+1)+'.  '+money(w.price);
+      const edit=document.createElement('button');edit.textContent='✎';edit.setAttribute('aria-label','Modifica '+money(w.price));edit.addEventListener('click',()=>openMoney(w.id));
+      const del=document.createElement('button');del.className='delete';del.textContent='✕';del.setAttribute('aria-label','Elimina '+money(w.price));
+      del.addEventListener('click',()=>{change(()=>state.weights=state.weights.filter(x=>x.id!==w.id));renderWeights();if(state.weights.length===0)closeModal('weightModal');toast('Importo eliminato');});
+      row.append(value,edit,del);area.append(row);
+    });}
+    function undo(){if(!history.length)return;const old=history.pop();state={counts:checkCounts(old.counts),weights:checkWeights(old.weights),nextId:old.nextId||state.nextId};
+      state.nextId=Math.max(state.nextId,...state.weights.map(x=>x.id+1),1);persist();render();toast('Ultima azione annullata');}
+    function reset(){history=[];state={counts:blank(),weights:[],nextId:1};tab='food';persist();render();toast('Nuovo ordine');}
+    function buildSettings(){const target=$('settingsList');target.replaceChildren();settings.items.forEach(p=>{
+      const box=document.createElement('section');box.className='settings-item';box.dataset.id=p.id;
+      const title=document.createElement('h3');title.textContent=p.name;box.append(title);
+      if(p.price!==null){const row=document.createElement('div');row.className='setting-row';const label=document.createElement('label');label.textContent='Prezzo';
+        const input=document.createElement('input');input.className='price-input';input.inputMode='decimal';input.value=(p.price/100).toFixed(2).replace('.',',');input.setAttribute('aria-label','Prezzo '+p.name);
+        row.append(label,input);box.append(row);}
+      const row=document.createElement('div');row.className='setting-row';const label=document.createElement('label');label.textContent='Colore';const colors=document.createElement('div');colors.className='swatches';
+      box.dataset.color=p.color;
+      const setColor=color=>{box.dataset.color=color;colors.querySelectorAll('.swatch').forEach(b=>b.classList.toggle('selected',b.dataset.color.toLowerCase()===color.toLowerCase()));};
+      palette.forEach(color=>{const b=document.createElement('button');b.className='swatch';b.dataset.color=color;b.style.background=color;b.setAttribute('aria-label','Colore '+color);
+        b.addEventListener('click',()=>{setColor(color);pick.value=color;});colors.append(b);});
+      const pick=document.createElement('input');pick.type='color';pick.className='custom-color';pick.value=p.color;pick.setAttribute('aria-label','Colore personalizzato '+p.name);
+      pick.addEventListener('input',()=>setColor(pick.value));colors.append(pick);setColor(p.color);row.append(label,colors);box.append(row);target.append(box);
+    });$('lockSettings').checked=settings.locked;}
+    function parsePrice(text){const raw=text.trim().replace(/\s|€/g,'').replace(',','.');if(!/^\d+(\.\d{1,2})?$/.test(raw))return null;
+      const num=Number(raw);return Number.isFinite(num)&&num>=0&&num<=9999.99?Math.round(num*100):null;}
+    function commitSettings(){const items=[];for(const box of $('settingsList').children){const p=get(box.dataset.id);const input=box.querySelector('.price-input');const n=input?parsePrice(input.value):null;
+      if(input&&n===null){input.focus();toast('Prezzo non valido');return;}
+      items.push({...p,color:box.dataset.color,price:p.price===null?null:n});}
+      settings={items,locked:$('lockSettings').checked};save(SETTINGS_KEY,settings);closeModal('settingsModal');render();toast('Impostazioni salvate');}
+    function restoreSettings(){settings={items:defaults(),locked:false};save(SETTINGS_KEY,settings);buildSettings();render();toast('Prezzi e colori ripristinati');}
+    $('tabFood').addEventListener('click',()=>selectTab('food'));
+    $('tabDrinks').addEventListener('click',()=>selectTab('drinks'));
+    $('undoBtn').addEventListener('click',undo);
+    $('qtyMinus').addEventListener('click',()=>editId&&addCount(editId,-1));
+    $('qtyPlus').addEventListener('click',()=>editId&&addCount(editId,1));
+    $('numpad').addEventListener('click',e=>{const btn=e.target.closest('button[data-key]');if(btn)digit(btn.dataset.key);});
+    $('moneyConfirm').addEventListener('click',commitMoney);
+    $('weightAddMore').addEventListener('click',()=>openMoney());
+    $('saveSettingsBtn').addEventListener('click',commitSettings);
+    $('resetSettingsBtn').addEventListener('click',restoreSettings);
+    document.querySelectorAll('[data-close]').forEach(b=>b.addEventListener('click',()=>closeModal(b.dataset.close)));
+    document.querySelectorAll('.modal').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)closeModal(m.id);}));
+    window.addEventListener('keydown',e=>{const modal=document.querySelector('.modal.open');if(!modal)return;
+      if(e.key==='Escape'){closeModal(modal.id);return;}
+      if(modal.id==='moneyModal'){if(/^\d$/.test(e.key)){digit(e.key);e.preventDefault();}else if(e.key==='Backspace'){digit('back');e.preventDefault();}else if(e.key==='Enter'&&!$('moneyConfirm').disabled){commitMoney();e.preventDefault();}}
     });
-    window.addEventListener("load", () => {
-      navigator.serviceWorker.register("./sw.js", { updateViaCache: "none" })
-        .then(reg => reg.update())
-        .catch(() => {});
-    });
-  }
-
-  render();
-})();
-</script>
+    const newBtn=$('newOrderBtn');const clearNew=()=>{clearTimeout(holdNew);holdNew=null;newBtn.classList.remove('holding');};
+    newBtn.addEventListener('pointerdown',e=>{e.preventDefault();clearNew();void newBtn.offsetWidth;newBtn.classList.add('holding');
+      holdNew=setTimeout(()=>{holdNew=null;newBtn.classList.remove('holding');reset();},650);});
+    ['pointerup','pointercancel','pointerleave'].forEach(ev=>newBtn.addEventListener(ev,clearNew));
+    newBtn.addEventListener('contextmenu',e=>e.preventDefault());
+    const gear=$('settingsBtn'),clearGear=()=>{clearTimeout(holdSettings);holdSettings=null;};
+    gear.addEventListener('pointerdown',()=>{if(!settings.locked)return;holdUnlocked=false;clearGear();holdSettings=setTimeout(()=>{holdSettings=null;holdUnlocked=true;buildSettings();openModal('settingsModal');},1400);});
+    ['pointerup','pointercancel','pointerleave'].forEach(ev=>gear.addEventListener(ev,clearGear));
+    gear.addEventListener('click',()=>{if(settings.locked){if(!holdUnlocked)toast('Tieni premuto ⚙ per aprire');holdUnlocked=false;return;}buildSettings();openModal('settingsModal');});
+    const persistOnHide=()=>persist();window.addEventListener('pagehide',persistOnHide);
+    if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').then(r=>{
+      // Update on launch only; never reload unexpectedly during an order.
+      r.update().catch(()=>{});
+    }).catch(()=>{}));}
+    persist();render();
+  })();
+  </script>
 </body>
 </html>
